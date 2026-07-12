@@ -31,9 +31,16 @@ export default function Signup() {
 
     try {
       setLoading(true);
-      await register(name, email, password);
-      // Auto redirect to dashboard on successful login/signup
-      navigate('/dashboard');
+      const userData = await register(name, email, password);
+      
+      // Redirect users strictly based on their role
+      let redirectPath = '/dashboard';
+      if (userData.role === 'Admin') redirectPath = '/admin';
+      else if (userData.role === 'Asset Manager') redirectPath = '/asset-manager';
+      else if (userData.role === 'Department Head') redirectPath = '/department-head';
+      else if (userData.role === 'Employee') redirectPath = '/employee';
+      
+      navigate(redirectPath);
     } catch (err) {
       console.error('Signup error:', err);
     } finally {
