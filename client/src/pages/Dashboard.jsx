@@ -17,7 +17,8 @@ import {
   TrendingUp, 
   BookOpen, 
   AlertTriangle,
-  FolderOpen
+  FolderOpen,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function Dashboard() {

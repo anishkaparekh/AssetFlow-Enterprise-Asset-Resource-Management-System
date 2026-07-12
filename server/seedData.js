@@ -145,10 +145,10 @@ const seedDatabase = async () => {
     console.log('Creating asset reservations (bookings)...');
     const booking = new Booking({
       assetId: savedAssets[1]._id, // Dell XPS
-      userId: savedEmployee._id,
-      status: 'Confirmed',
-      startDate: new Date(),
-      endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+      employeeId: savedEmployee._id,
+      status: 'Upcoming',
+      startTime: new Date(),
+      endTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
     });
     await booking.save();
 

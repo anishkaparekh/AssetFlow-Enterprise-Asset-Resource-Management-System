@@ -52,7 +52,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
         Asset.countDocuments({ status: 'Allocated' }),
         Maintenance.countDocuments({ status: { $in: ['Approved', 'In Progress'] } }),
         Transfer.countDocuments({ status: 'Pending' }),
-        Booking.countDocuments({ status: 'Confirmed', endDate: { $gte: new Date() } }),
+        Booking.countDocuments({ status: 'Upcoming', endTime: { $gte: new Date() } }),
       ]);
 
       responseData.stats = {
@@ -87,8 +87,8 @@ router.get('/stats', authMiddleware, async (req, res) => {
           status: 'Pending' 
         }),
         Booking.countDocuments({ 
-          userId: { $in: deptUserIds }, 
-          status: 'Pending' 
+          employeeId: { $in: deptUserIds }, 
+          status: 'Upcoming' 
         }),
       ]);
 
@@ -110,7 +110,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
       // 4. Employee Dashboard Stats (Default)
       const [myAssets, myBookings, myMaintenance] = await Promise.all([
         Asset.find({ currentHolderId: userId }),
-        Booking.find({ userId }).populate('assetId', 'name assetTag category'),
+        Booking.find({ employeeId: userId }).populate('assetId', 'name assetTag category'),
         Maintenance.find({ requesterId: userId }).populate('assetId', 'name assetTag status').sort({ createdAt: -1 }),
       ]);
 
