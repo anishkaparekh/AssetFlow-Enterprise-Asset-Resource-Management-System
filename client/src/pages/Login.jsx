@@ -29,8 +29,16 @@ export default function Login() {
 
     try {
       setLoading(true);
-      await login(email, password);
-      navigate(from, { replace: true });
+      const userData = await login(email, password);
+      
+      // Redirect users strictly based on their role
+      let redirectPath = '/dashboard';
+      if (userData.role === 'Admin') redirectPath = '/admin';
+      else if (userData.role === 'Asset Manager') redirectPath = '/asset-manager';
+      else if (userData.role === 'Department Head') redirectPath = '/department-head';
+      else if (userData.role === 'Employee') redirectPath = '/employee';
+      
+      navigate(redirectPath, { replace: true });
     } catch (err) {
       console.error('Login error:', err);
     } finally {

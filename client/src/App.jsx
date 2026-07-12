@@ -78,7 +78,11 @@ const AdminRoute = ({ children }) => {
   }
 
   if (user && user.role !== 'Admin') {
-    return <Navigate to="/dashboard" replace />;
+    let redirectPath = '/dashboard';
+    if (user.role === 'Asset Manager') redirectPath = '/asset-manager';
+    else if (user.role === 'Department Head') redirectPath = '/department-head';
+    else if (user.role === 'Employee') redirectPath = '/employee';
+    return <Navigate to={redirectPath} replace />;
   }
 
   return children;
@@ -114,6 +118,32 @@ export default function App() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Protected Role-specific Routes */}
+      <Route
+        path="/employee"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/department-head"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/asset-manager"
+        element={
+          <ProtectedRoute>
+            <AssetManager />
           </ProtectedRoute>
         }
       />

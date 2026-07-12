@@ -57,6 +57,37 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'An internal server error occurred' });
 });
 
+const User = require('./models/User');
+const bcrypt = require('bcryptjs');
+
+// Function to seed a default admin user on startup
+const createDefaultAdmin = async () => {
+  try {
+    const adminEmail = 'admin@assetflow.com';
+    const existingAdmin = await User.findOne({ email: adminEmail });
+    
+    if (!existingAdmin) {
+      console.log('No default admin account found. Initializing admin@assetflow.com...');
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash('admin123', salt);
+      
+      const defaultAdmin = new User({
+        name: 'System Administrator',
+        email: adminEmail,
+        passwordHash,
+        role: 'Admin',
+      });
+      
+      await defaultAdmin.save();
+      console.log('Default Admin user created successfully.');
+    } else {
+      console.log('Default Admin account exists and verified.');
+    }
+  } catch (error) {
+    console.error('Failed to create default admin on startup:', error.message);
+  }
+};
+
 // Database connection & Server Startup
 const connectDB = async () => {
   try {
@@ -65,6 +96,9 @@ const connectDB = async () => {
     
     await mongoose.connect(connStr);
     console.log('MongoDB Connected Successfully.');
+    
+    // Seed default admin
+    await createDefaultAdmin();
     
     app.listen(PORT, () => {
       console.log(`AssetFlow Server running on port ${PORT}`);
