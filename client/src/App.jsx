@@ -5,6 +5,7 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import { Loader2 } from 'lucide-react';
 
 // Protected Route Component
@@ -53,6 +54,33 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
+// Route only accessible to Admin users
+const AdminRoute = ({ children }) => {
+  const { user, token, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-dark-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 size={32} className="animate-spin text-brand-secondary" />
+          <span className="text-slate-400 text-sm">Verifying permissions...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!token) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (user && user.role !== 'Admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
+
 export default function App() {
   return (
     <Routes>
@@ -84,6 +112,16 @@ export default function App() {
           <ProtectedRoute>
             <Dashboard />
           </ProtectedRoute>
+        }
+      />
+
+      {/* Protected Admin Dashboard Route */}
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
         }
       />
 
