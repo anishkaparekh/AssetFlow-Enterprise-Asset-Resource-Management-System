@@ -13,9 +13,6 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Redirect path after login
-  const from = location.state?.from?.pathname || '/dashboard';
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setValidationError('');
@@ -29,8 +26,19 @@ export default function Login() {
 
     try {
       setLoading(true);
-      await login(email, password);
-      navigate(from, { replace: true });
+      const userData = await login(email, password);
+      
+      let targetPath = '/dashboard';
+      if (userData?.role === 'Admin') {
+        targetPath = '/admin/dashboard';
+      } else if (userData?.role === 'Asset Manager') {
+        targetPath = '/manager/dashboard';
+      } else if (userData?.role === 'Department Head') {
+        targetPath = '/department/dashboard';
+      }
+      
+      const destination = location.state?.from?.pathname || targetPath;
+      navigate(destination, { replace: true });
     } catch (err) {
       console.error('Login error:', err);
     } finally {
@@ -73,6 +81,31 @@ export default function Login() {
               <span>{validationError || error}</span>
             </div>
           )}
+
+          {/* Demo Credentials Box */}
+          <div className="mb-6 p-4 rounded-xl bg-white/2 border border-white/5 text-xs text-slate-400 leading-normal space-y-3">
+            <div className="font-semibold text-white uppercase tracking-wider text-[10px]">Demo Accounts</div>
+            <div className="flex justify-between items-center bg-dark-900 p-2.5 rounded-lg border border-white/5">
+              <div>
+                <div className="text-[10px] text-brand-secondary font-bold font-mono">ADMINISTRATOR</div>
+                <div className="text-slate-300">admin@assetflow.com</div>
+                <div className="text-[10px] text-slate-500 font-mono">Password: Admin@123</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('admin@assetflow.com');
+                  setPassword('Admin@123');
+                }}
+                className="px-2.5 py-1 bg-brand-primary/10 hover:bg-brand-primary/20 text-brand-primary border border-brand-primary/20 hover:border-brand-primary/30 rounded text-[10px] font-bold tracking-wider uppercase transition-all cursor-pointer"
+              >
+                Autofill
+              </button>
+            </div>
+            <div className="text-[10px] text-slate-500 text-center">
+              Employee: Register a new account
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email Field */}

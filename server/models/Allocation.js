@@ -12,7 +12,12 @@ const AllocationSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'Employee ID is required'],
     },
-    allocatedAt: {
+    allocatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'Allocating administrator/manager ID is required'],
+    },
+    allocationDate: {
       type: Date,
       default: Date.now,
     },
@@ -20,14 +25,23 @@ const AllocationSchema = new mongoose.Schema(
       type: Date,
       required: [true, 'Expected return date is required'],
     },
-    returnedAt: {
+    returnedDate: {
       type: Date,
       default: null,
     },
-    status: {
+    allocationStatus: {
       type: String,
-      enum: ['Active', 'Returned'],
-      default: 'Active',
+      enum: ['Allocated', 'Returned', 'Transfer Requested'],
+      default: 'Allocated',
+    },
+    targetHolderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    transferReason: {
+      type: String,
+      default: null,
     },
     returnCondition: {
       type: String,

@@ -17,7 +17,10 @@ import {
   TrendingUp, 
   BookOpen, 
   AlertTriangle,
-  FolderOpen
+  FolderOpen,
+  Check,
+  ShieldCheck,
+  ClipboardList
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -129,6 +132,14 @@ export default function Dashboard() {
                 <span>Inventory</span>
               </button>
             )}
+
+            <button
+              onClick={() => navigate('/allocations')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 border border-white/5 transition-all cursor-pointer"
+            >
+              <ClipboardList size={12} />
+              <span>Allocations</span>
+            </button>
 
             {user.role === 'Admin' && (
               <button
