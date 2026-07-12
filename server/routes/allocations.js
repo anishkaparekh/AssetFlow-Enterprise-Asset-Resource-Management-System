@@ -20,10 +20,11 @@ router.get('/', authMiddleware, async (req, res) => {
       filter.allocationStatus = status;
     }
 
+    const lowerRole = role ? role.toLowerCase() : '';
     // Role-based authorization filters
-    if (role === 'Employee') {
+    if (lowerRole === 'employee') {
       filter.employeeId = userId;
-    } else if (role === 'Department Head') {
+    } else if (lowerRole === 'department_head') {
       const activeHead = await User.findById(userId);
       const deptFilter = activeHead ? activeHead.departmentId : null;
       if (deptFilter) {
@@ -96,7 +97,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 router.post(
   '/',
   authMiddleware,
-  authorizeRoles('Admin', 'Asset Manager'),
+  authorizeRoles('admin', 'asset_manager'),
   async (req, res) => {
     try {
       const { assetId, employeeId, expectedReturnDate } = req.body;
@@ -166,7 +167,7 @@ router.post(
 router.put(
   '/:id/return',
   authMiddleware,
-  authorizeRoles('Admin', 'Asset Manager'),
+  authorizeRoles('admin', 'asset_manager'),
   async (req, res) => {
     try {
       const { returnCondition } = req.body;

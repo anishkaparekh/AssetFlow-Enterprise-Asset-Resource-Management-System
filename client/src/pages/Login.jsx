@@ -28,13 +28,17 @@ export default function Login() {
       setLoading(true);
       const userData = await login(email, password);
       
+      // Redirect users strictly based on their role
+      const userRole = userData?.role ? userData.role.toLowerCase() : '';
       let targetPath = '/dashboard';
-      if (userData?.role === 'Admin') {
+      if (userRole === 'admin') {
         targetPath = '/admin/dashboard';
-      } else if (userData?.role === 'Asset Manager') {
+      } else if (userRole === 'asset_manager' || userRole === 'asset manager') {
         targetPath = '/manager/dashboard';
-      } else if (userData?.role === 'Department Head') {
+      } else if (userRole === 'department_head' || userRole === 'department head') {
         targetPath = '/department/dashboard';
+      } else if (userRole === 'employee') {
+        targetPath = '/dashboard';
       }
       
       const destination = location.state?.from?.pathname || targetPath;

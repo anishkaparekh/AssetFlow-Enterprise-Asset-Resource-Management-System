@@ -1,27 +1,26 @@
 const express = require('express');
 const router = express.Router();
-const Maintenance = require('../models/Maintenance');
+const MaintenanceRequest = require('../models/MaintenanceRequest');
 const Asset = require('../models/Asset');
 const User = require('../models/User');
 const { authMiddleware, authorizeRoles } = require('../middleware/auth');
 const { createNotification } = require('../utils/notificationHelper');
 
 // @route   GET /api/maintenance
-// @desc    Get maintenance requests list (Scoped for users)
+// @desc    Get all maintenance requests (scoped to own requests for employees, all for admins/managers)
 // @access  Private
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const isManager = ['Admin', 'Asset Manager'].includes(req.user.role);
+    const isManager = ['admin', 'asset_manager'].includes(req.user.role);
     
     let query = {};
     if (!isManager) {
-      // Employees and Dept Heads view only their own requests
-      query.requesterId = req.user.id;
+      query.employeeId = req.user.id;
     }
 
-    const requests = await Maintenance.find(query)
+    const requests = await MaintenanceRequest.find(query)
       .populate('assetId', 'assetTag name category status')
-      .populate('requesterId', 'name email role')
+      .populate('employeeId', 'name email role')
       .sort({ createdAt: -1 });
 
     res.json(requests);
@@ -31,160 +30,207 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
-// @route   POST /api/maintenance
-// @desc    Raise a new maintenance request
+// @route   GET /api/maintenance/:id
+// @desc    Get details of a specific maintenance request
 // @access  Private
-router.post('/', authMiddleware, async (req, res) => {
+router.get('/:id', authMiddleware, async (req, res) => {
   try {
-    const { assetId, description } = req.body;
+    const request = await MaintenanceRequest.findById(req.params.id)
+      .populate('assetId', 'assetTag name category status')
+      .populate('employeeId', 'name email role');
 
-    if (!assetId || !description) {
-      return res.status(400).json({ message: 'Please provide asset reference and description' });
+    if (!request) {
+      return res.status(404).json({ message: 'Maintenance request not found' });
     }
 
-    // Verify asset exists
+    const isManager = ['admin', 'asset_manager'].includes(req.user.role);
+    if (!isManager && request.employeeId._id.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied to this record' });
+    }
+
+    res.json(request);
+  } catch (error) {
+    console.error('Error fetching maintenance request details:', error);
+    res.status(500).json({ message: 'Server error retrieving request details' });
+  }
+});
+
+// @route   POST /api/maintenance
+// @desc    Create a new maintenance request
+// @access  Private (Authenticated users)
+router.post('/', authMiddleware, async (req, res) => {
+  try {
+    const { assetId, issueTitle, issueDescription, priority } = req.body;
+
+    if (!assetId || !issueTitle || !issueDescription) {
+      return res.status(400).json({ 
+        message: 'Please provide assetId, issueTitle, and issueDescription' 
+      });
+    }
+
+    // Verify target asset exists
     const asset = await Asset.findById(assetId);
     if (!asset) {
       return res.status(404).json({ message: 'Asset not found' });
     }
 
-    const newRequest = new Maintenance({
+    // Business Rules validation: Only allocated assets can receive maintenance requests
+    if (asset.status !== 'Allocated') {
+      return res.status(400).json({ 
+        message: `Maintenance can only be requested for Allocated assets. Current asset status: ${asset.status}` 
+      });
+    }
+
+    // Ensure the employee is only requesting for an asset they hold (if not Admin/Manager)
+    const isManager = ['admin', 'asset_manager'].includes(req.user.role);
+    if (!isManager && asset.currentHolderId && asset.currentHolderId.toString() !== req.user.id) {
+      return res.status(403).json({ 
+        message: 'Access denied: You can only request maintenance for assets allocated to you.' 
+      });
+    }
+
+    // Create the request. Status is forced to 'Pending'
+    const newRequest = new MaintenanceRequest({
       assetId,
-      requesterId: req.user.id,
-      description,
+      employeeId: req.user.id,
+      issueTitle,
+      issueDescription,
+      priority: priority || 'Medium',
       status: 'Pending',
     });
 
     const savedRequest = await newRequest.save();
-    const populatedRequest = await Maintenance.findById(savedRequest._id)
-      .populate('assetId', 'assetTag name category status');
+    const populatedRequest = await MaintenanceRequest.findById(savedRequest._id)
+      .populate('assetId', 'assetTag name category status')
+      .populate('employeeId', 'name email role');
 
-    // Notify Asset Managers / Admins that a new request was raised
-    const managers = await User.find({ role: { $in: ['Admin', 'Asset Manager'] } });
-    for (const mgr of managers) {
-      await createNotification(
-        mgr._id,
-        'New Maintenance Ticket',
-        `Employee ${req.user.name || 'User'} raised a maintenance request for asset ${asset.name} (${asset.assetTag}).`,
-        'Booking Confirmed' // using a standard category
-      );
+    // Send notifications to managers
+    try {
+      const managers = await User.find({ role: { $in: ['admin', 'asset_manager'] } });
+      for (const mgr of managers) {
+        await createNotification(
+          mgr._id,
+          'New Maintenance Ticket',
+          `Employee ${req.user.name || 'User'} requested maintenance for: ${issueTitle}`,
+          'Maintenance Approved'
+        );
+      }
+    } catch (notifErr) {
+      console.warn('Notification delivery skipped:', notifErr.message);
     }
 
-    res.status(201).json({
-      message: 'Maintenance request filed successfully',
-      request: populatedRequest,
-    });
+    res.status(201).json(populatedRequest);
   } catch (error) {
-    console.error('Error raising maintenance request:', error);
-    res.status(500).json({ message: 'Server error filing maintenance ticket' });
+    console.error('Error creating maintenance request:', error);
+    res.status(500).json({ message: 'Server error creating request' });
   }
 });
 
-// @route   PUT /api/maintenance/:id/status
-// @desc    Update maintenance request status (Admin/Asset Manager only)
-// @access  Private (Admin, Asset Manager)
-router.put(
-  '/:id/status',
-  authMiddleware,
-  authorizeRoles('Admin', 'Asset Manager'),
-  async (req, res) => {
-    try {
-      const { status, cost, comments } = req.body;
-      const validStatuses = ['Pending', 'Approved', 'Rejected', 'In Progress', 'Resolved'];
+// @route   PUT /api/maintenance/:id
+// @desc    Update a maintenance request (Status changes restricted to Asset Managers/Admins)
+// @access  Private (Asset Manager/Admin for status, requester for details if still pending)
+router.put('/:id', authMiddleware, async (req, res) => {
+  try {
+    const { status, priority, issueTitle, issueDescription } = req.body;
+    const request = await MaintenanceRequest.findById(req.params.id);
 
-      if (!status) {
-        return res.status(400).json({ message: 'Status field is required' });
+    if (!request) {
+      return res.status(404).json({ message: 'Maintenance request not found' });
+    }
+
+    const isManager = ['admin', 'asset_manager'].includes(req.user.role);
+
+    // If changing status, verify caller is Manager/Admin
+    if (status && status !== request.status) {
+      if (!isManager) {
+        return res.status(403).json({ 
+          message: 'Access denied: Only Asset Managers/Admins can modify request status' 
+        });
       }
 
+      const validStatuses = ['Pending', 'Approved', 'In Progress', 'Completed', 'Rejected'];
       if (!validStatuses.includes(status)) {
-        return res.status(400).json({ message: 'Invalid status value' });
+        return res.status(400).json({ message: 'Invalid status transition' });
       }
 
-      const request = await Maintenance.findById(req.params.id);
-      if (!request) {
-        return res.status(404).json({ message: 'Maintenance record not found' });
-      }
-
+      // Load associated asset
       const asset = await Asset.findById(request.assetId);
-      if (!asset) {
-        return res.status(404).json({ message: 'Associated asset not found' });
-      }
-
-      // Update parameters
-      request.status = status;
-      if (cost !== undefined) request.cost = cost;
-      if (comments !== undefined) request.comments = comments;
-
-      // Handle lifecycle triggers
-      if (status === 'Approved') {
-        // Automatically set asset status to 'Under Maintenance'
-        asset.status = 'Under Maintenance';
-        await asset.save();
-        
-        request.startDate = new Date();
-
-        // Notify employee
-        await createNotification(
-          request.requesterId,
-          'Maintenance Approved',
-          `Your maintenance request for asset ${asset.name} has been approved. It is now flagged as Under Maintenance.`,
-          'Maintenance Approved'
-        );
-      } 
-      
-      else if (status === 'In Progress') {
-        // Double-check asset is Under Maintenance
-        if (asset.status !== 'Under Maintenance') {
+      if (asset) {
+        // Automatically sync asset state on approval / completion
+        if (status === 'Approved' || status === 'In Progress') {
           asset.status = 'Under Maintenance';
           await asset.save();
+        } else if (status === 'Completed') {
+          asset.status = 'Available';
+          asset.currentHolderId = null;
+          await asset.save();
         }
-        if (!request.startDate) {
-          request.startDate = new Date();
-        }
-      } 
-      
-      else if (status === 'Resolved') {
-        // Automatically restore asset status to 'Available'
-        asset.status = 'Available';
-        // Clear current holder (assumed returned post maintenance)
-        asset.currentHolderId = null;
-        await asset.save();
-
-        request.endDate = new Date();
-
-        // Notify employee
-        await createNotification(
-          request.requesterId,
-          'Maintenance Resolved',
-          `Your maintenance ticket for asset ${asset.name} has been resolved. The asset is back in the Available pool.`,
-          'Asset Returned'
-        );
-      } 
-      
-      else if (status === 'Rejected') {
-        // Notify employee
-        await createNotification(
-          request.requesterId,
-          'Maintenance Rejected',
-          `Your maintenance ticket for asset ${asset.name} has been rejected. Comment: ${comments || 'No comment provided.'}`,
-          'Asset Returned'
-        );
       }
 
-      const savedRequest = await request.save();
-      const populatedRequest = await Maintenance.findById(savedRequest._id)
-        .populate('assetId', 'assetTag name category status')
-        .populate('requesterId', 'name email role');
+      request.status = status;
 
-      res.json({
-        message: `Maintenance request status updated to ${status}`,
-        request: populatedRequest,
-      });
-    } catch (error) {
-      console.error('Error updating maintenance status:', error);
-      res.status(500).json({ message: 'Server error updating maintenance ticket' });
+      // Send status change notification to employee
+      try {
+        await createNotification(
+          request.employeeId,
+          'Maintenance Request Status Updated',
+          `Your maintenance request status has been updated to "${status}"`,
+          'Maintenance Approved'
+        );
+      } catch (notifErr) {}
     }
+
+    // Requester can update details only if ticket is still pending
+    if (priority || issueTitle || issueDescription) {
+      const isOwner = request.employeeId.toString() === req.user.id;
+      if (!isOwner && !isManager) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      if (!isManager && request.status !== 'Pending') {
+        return res.status(400).json({ 
+          message: 'Cannot edit request details once it has been processed' 
+        });
+      }
+
+      if (priority) {
+        const validPriorities = ['Low', 'Medium', 'High'];
+        if (!validPriorities.includes(priority)) {
+          return res.status(400).json({ message: 'Invalid priority assignment' });
+        }
+        request.priority = priority;
+      }
+      if (issueTitle) request.issueTitle = issueTitle;
+      if (issueDescription) request.issueDescription = issueDescription;
+    }
+
+    await request.save();
+    const populatedRequest = await MaintenanceRequest.findById(request._id)
+      .populate('assetId', 'assetTag name category status')
+      .populate('employeeId', 'name email role');
+
+    res.json(populatedRequest);
+  } catch (error) {
+    console.error('Error updating maintenance request:', error);
+    res.status(500).json({ message: 'Server error updating request' });
   }
-);
+});
+
+// @route   DELETE /api/maintenance/:id
+// @desc    Delete a maintenance request (Admin/Asset Manager only)
+// @access  Private (Admin/Asset Manager)
+router.delete('/:id', authMiddleware, authorizeRoles('admin', 'asset_manager'), async (req, res) => {
+  try {
+    const request = await MaintenanceRequest.findById(req.params.id);
+    if (!request) {
+      return res.status(404).json({ message: 'Maintenance request not found' });
+    }
+
+    await MaintenanceRequest.deleteOne({ _id: req.params.id });
+    res.json({ message: 'Maintenance request deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting maintenance request:', error);
+    res.status(500).json({ message: 'Server error deleting request' });
+  }
+});
 
 module.exports = router;

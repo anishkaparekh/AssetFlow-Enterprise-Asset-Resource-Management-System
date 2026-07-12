@@ -37,7 +37,7 @@ const autoSeed = async () => {
     }
 
     // 3. Seed Default Admin if none exists
-    const adminExists = await User.findOne({ role: 'Admin' });
+    const adminExists = await User.findOne({ email: 'admin@assetflow.com' });
     if (!adminExists) {
       console.log('[AutoSeed] Seeding default administrator account...');
       const salt = await bcrypt.genSalt(10);
@@ -47,7 +47,7 @@ const autoSeed = async () => {
         name: 'System Administrator',
         email: 'admin@assetflow.com',
         passwordHash,
-        role: 'Admin'
+        role: 'admin'
       });
       await admin.save();
       console.log('[AutoSeed] Default admin created: admin@assetflow.com / Admin@123');

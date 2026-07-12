@@ -50,12 +50,12 @@ router.post('/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    // Create user. CRITICAL: Force role to 'Employee' to block custom role input
+    // Create user. CRITICAL: Force role to 'employee' to block custom role input
     const newUser = new User({
       name,
       email,
       passwordHash,
-      role: 'Employee',
+      role: 'employee',
       departmentId: departmentId || null,
     });
 
@@ -93,15 +93,26 @@ router.post('/login', async (req, res) => {
 
     // Check for user
     const user = await User.findOne({ email });
+    
+    console.log('\nLogin Attempt:');
+    console.log(`Email: ${email}`);
+    console.log(`User Found: ${user ? 'YES' : 'NO'}`);
+    
     if (!user) {
+      console.log('Reason: User not found in database');
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Verify password
+    // Verify password using bcrypt.compare
     const isMatch = await bcrypt.compare(password, user.passwordHash);
+    console.log(`Password Match: ${isMatch ? 'YES' : 'NO'}`);
+    
     if (!isMatch) {
+      console.log('Reason: Password mismatch');
       return res.status(400).json({ message: 'Invalid credentials' });
     }
+
+    console.log(`Role: ${user.role}`);
 
     // Generate JWT
     const token = jwt.sign(
@@ -109,6 +120,16 @@ router.post('/login', async (req, res) => {
       JWT_SECRET,
       { expiresIn: '24h' }
     );
+    console.log('JWT Generated');
+
+    // Redirect mapping
+    let redirectPath = '/dashboard';
+    if (user.role === 'admin') redirectPath = '/admin';
+    else if (user.role === 'asset_manager') redirectPath = '/asset-manager';
+    else if (user.role === 'department_head') redirectPath = '/department-head';
+    else if (user.role === 'employee') redirectPath = '/employee';
+
+    console.log(`Redirect: ${redirectPath}`);
 
     res.json({
       message: 'Login successful',
@@ -134,6 +155,106 @@ router.get('/me', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Get profile error:', error);
     res.status(500).json({ message: 'Server error retrieving profile' });
+  }
+});
+
+// @route   POST /api/auth/seed
+// @desc    Seed MERN database collections over HTTP (dev helper)
+// @access  Public
+router.post('/seed', async (req, res) => {
+  try {
+    const Department = require('../models/Department');
+    const Asset = require('../models/Asset');
+    const Booking = require('../models/Booking');
+    const Transfer = require('../models/Transfer');
+    const Audit = require('../models/Audit');
+    const Notification = require('../models/Notification');
+    const MaintenanceRequest = require('../models/MaintenanceRequest');
+    const Allocation = require('../models/Allocation');
+
+    console.log('HTTP Seeding initiated...');
+    
+    // Clear collections (keep admin)
+    await Promise.all([
+      User.deleteMany({ email: { $ne: 'admin@assetflow.com' } }),
+      Department.deleteMany({}),
+      Asset.deleteMany({}),
+      Booking.deleteMany({}),
+      Transfer.deleteMany({}),
+      Audit.deleteMany({}),
+      Notification.deleteMany({}),
+      MaintenanceRequest.deleteMany({}),
+      Allocation.deleteMany({}),
+    ]);
+
+    // Create Departments
+    const deptEngineering = new Department({
+      name: 'Engineering',
+      description: 'Software development, QA engineering, and product operations.',
+    });
+    const savedEngDept = await deptEngineering.save();
+
+    // Create manager user
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash('password123', salt);
+    const managerUser = new User({
+      name: 'Bob Manager',
+      email: 'manager@assetflow.com',
+      passwordHash,
+      role: 'asset_manager',
+    });
+    const savedManager = await managerUser.save();
+
+    // Create employee user
+    const employeeUser = new User({
+      name: 'David Employee',
+      email: 'employee@assetflow.com',
+      passwordHash,
+      role: 'employee',
+      departmentId: savedEngDept._id.toString(),
+    });
+    const savedEmployee = await employeeUser.save();
+
+    // Create Assets
+    const assets = [
+      {
+        assetTag: 'AST-LTP-001',
+        name: 'MacBook Pro 16" M3 Max',
+        category: 'Laptops',
+        status: 'Allocated',
+        currentHolderId: savedEmployee._id,
+        departmentId: savedEngDept._id.toString(),
+      },
+      {
+        assetTag: 'AST-LTP-002',
+        name: 'Dell XPS 15 9530',
+        category: 'Laptops',
+        status: 'Available',
+        currentHolderId: null,
+        departmentId: savedEngDept._id.toString(),
+      },
+    ];
+    const savedAssets = await Asset.insertMany(assets);
+
+    const adminUser = await User.findOne({ email: 'admin@assetflow.com' });
+    const adminId = adminUser ? adminUser._id : savedManager._id;
+
+    // Create matching Allocation document
+    const allocation = new Allocation({
+      assetId: savedAssets[0]._id,
+      employeeId: savedEmployee._id,
+      allocatedBy: adminId,
+      allocationDate: new Date(),
+      expectedReturnDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      allocationStatus: 'Allocated',
+    });
+    await allocation.save();
+
+    console.log('HTTP Seeding completed successfully!');
+    res.json({ message: 'Seeding completed successfully over HTTP' });
+  } catch (err) {
+    console.error('HTTP Seeding error:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 

@@ -747,10 +747,10 @@ export default function AdminDashboard() {
                                   onChange={(e) => handleUserRoleDeptUpdate(item._id, e.target.value, item.departmentId)}
                                   className="px-2 py-1 bg-dark-900 border border-white/5 rounded-lg text-slate-300 focus:border-brand-secondary outline-none text-xs cursor-pointer hover:border-white/10"
                                 >
-                                  <option value="Admin">Admin</option>
-                                  <option value="Asset Manager">Asset Manager</option>
-                                  <option value="Department Head">Department Head</option>
-                                  <option value="Employee">Employee</option>
+                                  <option value="admin">Admin</option>
+                                  <option value="asset_manager">Asset Manager</option>
+                                  <option value="department_head">Department Head</option>
+                                  <option value="employee">Employee</option>
                                 </select>
                               </td>
 

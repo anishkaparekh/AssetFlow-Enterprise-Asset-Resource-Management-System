@@ -25,7 +25,7 @@ const authMiddleware = async (req, res, next) => {
 
 // Middleware to verify Admin authorization
 const adminMiddleware = (req, res, next) => {
-  if (req.user && req.user.role === 'Admin') {
+  if (req.user && req.user.role === 'admin') {
     next();
   } else {
     return res.status(403).json({ message: 'Access denied, administrator role required' });
@@ -59,9 +59,14 @@ router.put('/:id/role', authMiddleware, adminMiddleware, async (req, res) => {
     const { role, departmentId } = req.body;
     const userId = req.params.id;
 
-    const validRoles = ['Admin', 'Asset Manager', 'Department Head', 'Employee'];
-    if (role && !validRoles.includes(role)) {
-      return res.status(400).json({ message: 'Invalid role assignment' });
+    let mappedRole = role;
+    if (role) {
+      const lower = role.toLowerCase().replace(' ', '_');
+      if (['admin', 'asset_manager', 'department_head', 'employee'].includes(lower)) {
+        mappedRole = lower;
+      } else {
+        return res.status(400).json({ message: 'Invalid role assignment' });
+      }
     }
 
     const user = await User.findById(userId);
@@ -69,7 +74,7 @@ router.put('/:id/role', authMiddleware, adminMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    if (role) user.role = role;
+    if (mappedRole) user.role = mappedRole;
     if (departmentId !== undefined) {
       user.departmentId = departmentId || null;
     }

@@ -56,21 +56,21 @@ const seedDatabase = async () => {
       name: 'Alice Admin',
       email: 'admin@assetflow.com',
       passwordHash,
-      role: 'Admin',
+      role: 'admin',
     });
 
     const managerUser = new User({
       name: 'Bob Manager',
       email: 'manager@assetflow.com',
       passwordHash,
-      role: 'Asset Manager',
+      role: 'asset_manager',
     });
 
     const headUser = new User({
       name: 'Charlie Head',
       email: 'head@assetflow.com',
       passwordHash,
-      role: 'Department Head',
+      role: 'department_head',
       departmentId: savedEngDept._id.toString(),
     });
 
@@ -78,7 +78,7 @@ const seedDatabase = async () => {
       name: 'David Employee',
       email: 'employee@assetflow.com',
       passwordHash,
-      role: 'Employee',
+      role: 'employee',
       departmentId: savedEngDept._id.toString(),
     });
 

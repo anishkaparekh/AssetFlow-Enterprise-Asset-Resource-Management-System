@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -14,8 +14,8 @@ import {
   Cpu, 
   Wrench, 
   Bell, 
-  TrendingUp, 
-  BookOpen, 
+  TrendingUp,
+  BookOpen,
   AlertTriangle,
   FolderOpen,
   Check,
@@ -27,6 +27,7 @@ export default function Dashboard() {
   const { user, logout } = useAuth();
   const userDeptId = user?.departmentId;
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -73,11 +74,11 @@ export default function Dashboard() {
 
   const getRoleBadge = (role) => {
     switch (role) {
-      case 'Admin':
+      case 'admin':
         return 'bg-red-500/10 text-red-400 border border-red-500/20';
-      case 'Asset Manager':
+      case 'asset_manager':
         return 'bg-brand-secondary/10 text-brand-secondary border border-brand-secondary/20';
-      case 'Department Head':
+      case 'department_head':
         return 'bg-purple-500/10 text-purple-400 border border-purple-500/20';
       default:
         return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
@@ -115,19 +116,27 @@ export default function Dashboard() {
               )}
             </button>
 
-            {/* Custom Nav Actions */}
+             {/* Custom Nav Actions */}
             <button
               onClick={() => navigate('/maintenance')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 border border-white/5 transition-all cursor-pointer"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                location.pathname === '/maintenance'
+                  ? 'bg-brand-secondary/15 text-brand-secondary border-brand-secondary/25'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5 border-white/5'
+              }`}
             >
               <Wrench size={12} />
               <span>Maintenance</span>
             </button>
 
-            {(user.role === 'Admin' || user.role === 'Asset Manager') && (
+            {(user.role === 'admin' || user.role === 'asset_manager') && (
               <button
                 onClick={() => navigate('/assets')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 border border-white/5 transition-all cursor-pointer"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                  location.pathname === '/assets' || location.pathname === '/asset-manager'
+                    ? 'bg-brand-primary/15 text-brand-primary border-brand-primary/25'
+                    : 'text-slate-300 hover:text-white hover:bg-white/5 border-white/5'
+                }`}
               >
                 <Cpu size={12} />
                 <span>Inventory</span>
@@ -136,16 +145,24 @@ export default function Dashboard() {
 
             <button
               onClick={() => navigate('/allocations')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 border border-white/5 transition-all cursor-pointer"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                location.pathname === '/allocations'
+                  ? 'bg-brand-primary/15 text-brand-primary border-brand-primary/25'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5 border-white/5'
+              }`}
             >
               <ClipboardList size={12} />
               <span>Allocations</span>
             </button>
 
-            {user.role === 'Admin' && (
+            {user.role && user.role.toLowerCase() === 'admin' && (
               <button
                 onClick={() => navigate('/admin')}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-primary/10 border border-brand-primary/25 text-brand-primary hover:bg-brand-primary/20 transition-all cursor-pointer"
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                  location.pathname === '/admin' || location.pathname === '/admin/dashboard'
+                    ? 'bg-brand-primary/20 border-brand-primary/35 text-brand-primary'
+                    : 'bg-brand-primary/10 border-brand-primary/25 text-brand-primary hover:bg-brand-primary/20'
+                }`}
               >
                 Admin Panel
               </button>
@@ -193,7 +210,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               
               {/* ADMIN VIEW STATS */}
-              {user.role === 'Admin' && dashboardData?.stats && (
+              {user.role === 'admin' && dashboardData?.stats && (
                 <>
                   <div className="glass p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-brand-primary/20 transition-all">
                     <div>
@@ -230,44 +247,44 @@ export default function Dashboard() {
               )}
 
               {/* ASSET MANAGER VIEW STATS */}
-              {user.role === 'Asset Manager' && dashboardData?.stats && (
+              {user.role === 'asset_manager' && dashboardData?.stats && (
                 <>
-                  <div className="glass p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-emerald-500/20 transition-all">
+                  <div className="glass p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-yellow-500/20 transition-all">
                     <div>
-                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Available Assets</span>
-                      <div className="text-2xl font-bold text-emerald-400 mt-1">{dashboardData.stats.availableAssets}</div>
+                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Pending Maintenance</span>
+                      <div className="text-2xl font-bold text-yellow-400 mt-1">{dashboardData.stats.pendingMaintenance}</div>
                     </div>
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400"><Check size={20} /></div>
-                  </div>
-
-                  <div className="glass p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-brand-primary/20 transition-all">
-                    <div>
-                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Allocated Assets</span>
-                      <div className="text-2xl font-bold text-white mt-1">{dashboardData.stats.allocatedAssets}</div>
-                    </div>
-                    <div className="w-10 h-10 rounded-xl bg-brand-primary/10 flex items-center justify-center text-brand-primary"><Cpu size={20} /></div>
+                    <div className="w-10 h-10 rounded-xl bg-yellow-500/10 flex items-center justify-center text-yellow-400"><Clock size={20} /></div>
                   </div>
 
                   <div className="glass p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-orange-500/20 transition-all">
                     <div>
-                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Under Maintenance</span>
-                      <div className="text-2xl font-bold text-orange-400 mt-1">{dashboardData.stats.maintenanceToday}</div>
+                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Assets Under Maintenance</span>
+                      <div className="text-2xl font-bold text-orange-400 mt-1">{dashboardData.stats.assetsUnderMaintenance}</div>
                     </div>
                     <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400"><Wrench size={20} /></div>
                   </div>
 
-                  <div className="glass p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-brand-secondary/20 transition-all">
+                  <div className="glass p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-emerald-500/20 transition-all">
                     <div>
-                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Pending Transfers</span>
-                      <div className="text-2xl font-bold text-white mt-1">{dashboardData.stats.pendingTransfers}</div>
+                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Completed Today</span>
+                      <div className="text-2xl font-bold text-emerald-400 mt-1">{dashboardData.stats.completedToday}</div>
                     </div>
-                    <div className="w-10 h-10 rounded-xl bg-brand-secondary/10 flex items-center justify-center text-brand-secondary"><TrendingUp size={20} /></div>
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400"><CheckCircle2 size={20} /></div>
+                  </div>
+
+                  <div className="glass p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-brand-primary/20 transition-all">
+                    <div>
+                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Available Assets</span>
+                      <div className="text-2xl font-bold text-white mt-1">{dashboardData.stats.availableAssets}</div>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-brand-primary/10 flex items-center justify-center text-brand-primary"><Cpu size={20} /></div>
                   </div>
                 </>
               )}
 
               {/* DEPARTMENT HEAD VIEW STATS */}
-              {user.role === 'Department Head' && dashboardData?.stats && (
+              {user.role === 'department_head' && dashboardData?.stats && (
                 <>
                   <div className="glass p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-brand-primary/20 transition-all">
                     <div>
@@ -304,11 +321,11 @@ export default function Dashboard() {
               )}
 
               {/* EMPLOYEE VIEW STATS */}
-              {user.role === 'Employee' && dashboardData?.stats && (
+              {user.role === 'employee' && dashboardData?.stats && (
                 <>
                   <div className="glass p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-brand-primary/20 transition-all">
                     <div>
-                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">My Custody Assets</span>
+                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">My Assets</span>
                       <div className="text-2xl font-bold text-white mt-1">{dashboardData.stats.myAssetsCount}</div>
                     </div>
                     <div className="w-10 h-10 rounded-xl bg-brand-primary/10 flex items-center justify-center text-brand-primary"><Cpu size={20} /></div>
@@ -316,27 +333,26 @@ export default function Dashboard() {
 
                   <div className="glass p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-brand-secondary/20 transition-all">
                     <div>
-                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">My Reservations</span>
-                      <div className="text-2xl font-bold text-white mt-1">{dashboardData.stats.myBookingsCount}</div>
+                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Pending Maintenance</span>
+                      <div className="text-2xl font-bold text-yellow-400 mt-1">{dashboardData.stats.pendingMaintenance}</div>
                     </div>
-                    <div className="w-10 h-10 rounded-xl bg-brand-secondary/10 flex items-center justify-center text-brand-secondary"><BookOpen size={20} /></div>
+                    <div className="w-10 h-10 rounded-xl bg-yellow-500/10 flex items-center justify-center text-yellow-400"><Clock size={20} /></div>
+                  </div>
+
+                  <div className="glass p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-emerald-500/20 transition-all">
+                    <div>
+                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Completed Maintenance</span>
+                      <div className="text-2xl font-bold text-emerald-400 mt-1">{dashboardData.stats.completedMaintenance}</div>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400"><CheckCircle2 size={20} /></div>
                   </div>
 
                   <div className="glass p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-orange-500/20 transition-all">
                     <div>
-                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Maintenance Tickets</span>
-                      <div className="text-2xl font-bold text-orange-400 mt-1">{dashboardData.stats.myMaintenanceCount}</div>
+                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Current Allocations</span>
+                      <div className="text-2xl font-bold text-orange-400 mt-1">{dashboardData.stats.currentAllocations}</div>
                     </div>
                     <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400"><Wrench size={20} /></div>
-                  </div>
-
-                  <div className="glass p-6 rounded-2xl border border-white/5 flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Compliance Status</span>
-                      <div className="text-xs font-bold text-emerald-400 mt-2 flex items-center gap-1">
-                        <ShieldCheck size={14} /> Synced & Audit Ready
-                      </div>
-                    </div>
                   </div>
                 </>
               )}
@@ -350,13 +366,13 @@ export default function Dashboard() {
               <div className="lg:col-span-8">
                 
                 {/* Employee custody list */}
-                {user.role === 'Employee' && (
+                {user.role === 'employee' && (
                   <div className="glass rounded-2xl border border-white/5 overflow-hidden">
                     <div className="p-5 border-b border-white/5 bg-white/[0.005]">
                       <h3 className="font-semibold text-white text-sm">Assets Under My Custody</h3>
                       <p className="text-slate-500 text-[10px]">These hardware resources are assigned to your profile identifier.</p>
                     </div>
-                    {dashboardData.myAssets?.length === 0 ? (
+                    {!dashboardData.myAllocations || dashboardData.myAllocations.length === 0 ? (
                       <div className="p-10 text-center text-slate-500 text-xs">
                         You do not hold custody over any assets at the moment.
                       </div>
@@ -368,21 +384,36 @@ export default function Dashboard() {
                               <th className="p-4">Asset Name</th>
                               <th className="p-4">Tag Reference</th>
                               <th className="p-4">Category</th>
+                              <th className="p-4">Allocation Date</th>
                               <th className="p-4">Current Status</th>
+                              <th className="p-4 text-right">Actions</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-white/5">
-                            {dashboardData.myAssets.map((asset) => (
-                              <tr key={asset._id} className="hover:bg-white/[0.005]">
-                                <td className="p-4 text-white font-semibold">{asset.name}</td>
-                                <td className="p-4 text-slate-400 font-mono">{asset.assetTag}</td>
-                                <td className="p-4 text-slate-400">{asset.category}</td>
+                            {dashboardData.myAllocations.map((item) => (
+                              <tr key={item._id} className="hover:bg-white/[0.005]">
+                                <td className="p-4 text-white font-semibold">{item.assetId?.name || 'Unknown Asset'}</td>
+                                <td className="p-4 text-slate-400 font-mono">{item.assetId?.assetTag || 'N/A'}</td>
+                                <td className="p-4 text-slate-400">{item.assetId?.category || 'N/A'}</td>
+                                <td className="p-4 text-slate-400 font-mono text-[10px]">
+                                  {new Date(item.allocatedAt).toLocaleDateString()}
+                                </td>
                                 <td className="p-4">
                                   <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold ${
-                                    asset.status === 'Available' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-brand-primary/10 text-brand-primary'
+                                    item.assetId?.status === 'Available' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-brand-primary/10 text-brand-primary'
                                   }`}>
-                                    {asset.status}
+                                    {item.assetId?.status || 'Allocated'}
                                   </span>
+                                </td>
+                                <td className="p-4 text-right">
+                                  {item.assetId && item.assetId.status === 'Allocated' && (
+                                    <button
+                                      onClick={() => navigate(`/maintenance?assetId=${item.assetId._id}`)}
+                                      className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/25 transition-all cursor-pointer"
+                                    >
+                                      Raise Maintenance
+                                    </button>
+                                  )}
                                 </td>
                               </tr>
                             ))}
@@ -394,7 +425,7 @@ export default function Dashboard() {
                 )}
 
                 {/* Asset Manager ongoing maintenance list */}
-                {user.role === 'Asset Manager' && (
+                {user.role === 'asset_manager' && (
                   <div className="glass rounded-2xl border border-white/5 overflow-hidden">
                     <div className="p-5 border-b border-white/5 bg-white/[0.005]">
                       <h3 className="font-semibold text-white text-sm">Ongoing Maintenance Dispatch logs</h3>
@@ -427,7 +458,7 @@ export default function Dashboard() {
                 )}
 
                 {/* Department Head custody list */}
-                {user.role === 'Department Head' && (
+                {user.role === 'department_head' && (
                   <div className="glass rounded-2xl border border-white/5 overflow-hidden">
                     <div className="p-5 border-b border-white/5 bg-white/[0.005]">
                       <h3 className="font-semibold text-white text-sm">Department Resource Inventory</h3>
@@ -471,7 +502,7 @@ export default function Dashboard() {
                 )}
 
                 {/* Admin user directory preview */}
-                {user.role === 'Admin' && (
+                {user.role === 'admin' && (
                   <div className="glass rounded-2xl border border-white/5 overflow-hidden">
                     <div className="p-5 border-b border-white/5 bg-white/[0.005]">
                       <h3 className="font-semibold text-white text-sm">Recent User Enrollments</h3>
@@ -539,22 +570,74 @@ export default function Dashboard() {
 
                 {/* Quick Navigation Card */}
                 <div className="glass p-6 rounded-2xl border border-white/5 text-xs">
-                  <h3 className="font-semibold text-white mb-4">Quick Links</h3>
+                  <h3 className="font-semibold text-white mb-4">Quick Actions</h3>
                   <div className="space-y-2">
+                    {user.role === 'employee' && (
+                      <>
+                        <button
+                          onClick={() => {
+                            const firstAsset = dashboardData?.myAllocations?.[0]?.assetId?._id;
+                            if (firstAsset) {
+                              navigate(`/maintenance?assetId=${firstAsset}`);
+                            } else {
+                              navigate('/maintenance');
+                            }
+                          }}
+                          className="w-full py-2.5 px-4 bg-brand-primary/10 hover:bg-brand-primary/20 border border-brand-primary/20 rounded-xl text-left text-xs font-semibold text-brand-primary hover:border-brand-primary/30 transition-all flex items-center justify-between cursor-pointer"
+                        >
+                          <span>Raise Maintenance</span>
+                          <Plus size={14} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            document.getElementById('my-custody-assets')?.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 text-left text-xs font-semibold text-white hover:border-white/10 transition-all cursor-pointer"
+                        >
+                          View My Assets
+                        </button>
+                        <button
+                          onClick={() => navigate('/maintenance')}
+                          className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 text-left text-xs font-semibold text-white hover:border-white/10 transition-all cursor-pointer"
+                        >
+                          View Maintenance History
+                        </button>
+                      </>
+                    )}
+
+                    {user.role === 'asset_manager' && (
+                      <>
+                        <button
+                          onClick={() => navigate('/maintenance')}
+                          className="w-full py-2.5 px-4 bg-brand-primary/10 hover:bg-brand-primary/20 border border-brand-primary/20 rounded-xl text-left text-xs font-semibold text-brand-primary hover:border-brand-primary/30 transition-all flex items-center justify-between cursor-pointer"
+                        >
+                          <span>Approve Request</span>
+                          <Check size={14} />
+                        </button>
+                        <button
+                          onClick={() => navigate('/assets')}
+                          className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 text-left text-xs font-semibold text-white hover:border-white/10 transition-all cursor-pointer"
+                        >
+                          View Assets
+                        </button>
+                        <button
+                          onClick={() => navigate('/assets?tab=allocations')}
+                          className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 text-left text-xs font-semibold text-white hover:border-white/10 transition-all cursor-pointer"
+                        >
+                          View Allocation History
+                        </button>
+                      </>
+                    )}
+
+                    {/* Default Alert Center navigation for all roles */}
                     <button
                       onClick={() => navigate('/notifications')}
-                      className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 text-left text-xs font-semibold text-white hover:border-white/10 transition-all flex items-center justify-between cursor-pointer"
+                      className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 text-left text-xs font-semibold text-slate-400 hover:text-white hover:border-white/10 transition-all flex items-center justify-between cursor-pointer"
                     >
                       <span>Alert Center</span>
-                      <span className="bg-brand-primary text-white font-bold rounded-full w-4 h-4 text-[9px] flex items-center justify-center">
+                      <span className="bg-brand-secondary/20 text-brand-secondary font-bold rounded-full w-5 h-5 text-[9px] flex items-center justify-center border border-brand-secondary/35">
                         {unreadCount}
                       </span>
-                    </button>
-                    <button
-                      onClick={() => navigate('/maintenance')}
-                      className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 text-left text-xs font-semibold text-white hover:border-white/10 transition-all cursor-pointer"
-                    >
-                      Maintenance Central
                     </button>
                   </div>
                 </div>
