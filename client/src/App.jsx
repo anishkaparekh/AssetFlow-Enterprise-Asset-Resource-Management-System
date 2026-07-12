@@ -5,6 +5,7 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
+import AssetManager from './pages/AssetManager';
 import { Loader2 } from 'lucide-react';
 
 // Protected Route Component
@@ -87,8 +88,19 @@ export default function App() {
         }
       />
 
+      {/* Protected Asset Manager Route */}
+      <Route
+        path="/assets"
+        element={
+          <ProtectedRoute>
+            <AssetManager />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Fallback redirect */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
+// Trigger HMR rebuild

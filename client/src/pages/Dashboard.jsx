@@ -123,6 +123,27 @@ export default function Dashboard() {
 
         </div>
 
+        {/* Asset Management Portal Access */}
+        {(user.role === 'Admin' || user.role === 'Asset Manager') && (
+          <div className="glass-accent p-6 rounded-2xl border border-brand-primary/20 mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <Database size={20} className="text-brand-secondary" />
+                <h3 className="font-semibold text-white font-display text-lg">Asset Engine Portal</h3>
+              </div>
+              <p className="text-sm text-slate-400 max-w-xl">
+                As an authorized {user.role}, you have access to register new hardware assets, view the complete inventory directory, and modify their lifecycle states.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/assets')}
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-primary to-brand-secondary text-sm font-semibold text-white hover:opacity-90 active:scale-95 transition-all shadow-lg hover:shadow-brand-primary/20 shrink-0 cursor-pointer"
+            >
+              Manage Assets
+            </button>
+          </div>
+        )}
+
         {/* API Details Panel */}
         <div className="glass p-6 rounded-2xl border border-white/5">
           <div className="flex items-center gap-3 mb-4">
