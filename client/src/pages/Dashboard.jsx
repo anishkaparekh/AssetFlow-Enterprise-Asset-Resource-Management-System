@@ -25,6 +25,7 @@ import {
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
+  const userDeptId = user?.departmentId;
   const navigate = useNavigate();
 
   const [dashboardData, setDashboardData] = useState(null);
