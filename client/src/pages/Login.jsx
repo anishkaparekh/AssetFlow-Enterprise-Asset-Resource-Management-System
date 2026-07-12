@@ -33,10 +33,10 @@ export default function Login() {
       
       // Redirect users strictly based on their role
       let redirectPath = '/dashboard';
-      if (userData.role === 'Admin') redirectPath = '/admin';
-      else if (userData.role === 'Asset Manager') redirectPath = '/asset-manager';
-      else if (userData.role === 'Department Head') redirectPath = '/department-head';
-      else if (userData.role === 'Employee') redirectPath = '/employee';
+      if (userData.role === 'admin') redirectPath = '/admin';
+      else if (userData.role === 'asset_manager') redirectPath = '/asset-manager';
+      else if (userData.role === 'department_head') redirectPath = '/department-head';
+      else if (userData.role === 'employee') redirectPath = '/employee';
       
       navigate(redirectPath, { replace: true });
     } catch (err) {

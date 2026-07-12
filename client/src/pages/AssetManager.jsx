@@ -140,7 +140,7 @@ export default function AssetManager() {
   }, [activeTab, fetchAssets]);
 
   useEffect(() => {
-    if (user && (user.role === 'Admin' || user.role === 'Asset Manager')) {
+    if (user && (user.role === 'admin' || user.role === 'asset_manager')) {
       loadTabContent();
     }
   }, [activeTab, filters, user, loadTabContent]);
@@ -286,7 +286,7 @@ export default function AssetManager() {
     }
   };
 
-  const isAuthorized = user && (user.role === 'Admin' || user.role === 'Asset Manager');
+  const isAuthorized = user && (user.role === 'admin' || user.role === 'asset_manager');
 
   if (!user) {
     return (

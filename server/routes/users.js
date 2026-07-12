@@ -25,7 +25,7 @@ const authMiddleware = async (req, res, next) => {
 
 // Middleware to verify Admin authorization
 const adminMiddleware = (req, res, next) => {
-  if (req.user && req.user.role === 'Admin') {
+  if (req.user && req.user.role === 'admin') {
     next();
   } else {
     return res.status(403).json({ message: 'Access denied, administrator role required' });
@@ -60,7 +60,7 @@ router.put('/:id/role', authMiddleware, adminMiddleware, async (req, res) => {
     const userId = req.params.id;
 
     // Validate role if provided
-    const validRoles = ['Admin', 'Asset Manager', 'Department Head', 'Employee'];
+    const validRoles = ['admin', 'asset_manager', 'department_head', 'employee'];
     if (role && !validRoles.includes(role)) {
       return res.status(400).json({ message: 'Invalid role assignment' });
     }

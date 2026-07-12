@@ -86,7 +86,7 @@ router.post('/', authMiddleware, async (req, res) => {
 router.put(
   '/:id/action',
   authMiddleware,
-  authorizeRoles('Admin', 'Asset Manager', 'Department Head'),
+  authorizeRoles('admin', 'asset_manager', 'department_head'),
   async (req, res) => {
     try {
       const { action } = req.body; // 'Approve' or 'Reject'

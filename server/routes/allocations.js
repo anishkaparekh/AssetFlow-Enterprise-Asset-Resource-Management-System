@@ -11,7 +11,7 @@ const { authMiddleware, authorizeRoles } = require('../middleware/auth');
 router.get(
   '/',
   authMiddleware,
-  authorizeRoles('Admin', 'Asset Manager'),
+  authorizeRoles('admin', 'asset_manager'),
   async (req, res) => {
     try {
       const { status } = req.query;
@@ -37,7 +37,7 @@ router.get(
 router.post(
   '/',
   authMiddleware,
-  authorizeRoles('Admin', 'Asset Manager'),
+  authorizeRoles('admin', 'asset_manager'),
   async (req, res) => {
     try {
       const { assetId, employeeId, expectedReturnDate } = req.body;
@@ -106,7 +106,7 @@ router.post(
 router.put(
   '/:id/return',
   authMiddleware,
-  authorizeRoles('Admin', 'Asset Manager'),
+  authorizeRoles('admin', 'asset_manager'),
   async (req, res) => {
     try {
       const { returnCondition } = req.body;

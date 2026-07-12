@@ -77,11 +77,11 @@ const AdminRoute = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (user && user.role !== 'Admin') {
+  if (user && user.role !== 'admin') {
     let redirectPath = '/dashboard';
-    if (user.role === 'Asset Manager') redirectPath = '/asset-manager';
-    else if (user.role === 'Department Head') redirectPath = '/department-head';
-    else if (user.role === 'Employee') redirectPath = '/employee';
+    if (user.role === 'asset_manager') redirectPath = '/asset-manager';
+    else if (user.role === 'department_head') redirectPath = '/department-head';
+    else if (user.role === 'employee') redirectPath = '/employee';
     return <Navigate to={redirectPath} replace />;
   }
 

@@ -8,6 +8,8 @@ const Maintenance = require('../models/Maintenance');
 const Booking = require('../models/Booking');
 const Transfer = require('../models/Transfer');
 const Audit = require('../models/Audit');
+const Allocation = require('../models/Allocation');
+const MaintenanceRequest = require('../models/MaintenanceRequest');
 const { authMiddleware } = require('../middleware/auth');
 
 // @route   GET /api/dashboard/stats
@@ -24,7 +26,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
 
     let responseData = { role };
 
-    if (role === 'Admin') {
+    if (role === 'admin') {
       // 1. Admin Dashboard Stats
       const [totalUsers, totalDepts, totalAssets, activeAudits] = await Promise.all([
         User.countDocuments(),
@@ -45,32 +47,32 @@ router.get('/stats', authMiddleware, async (req, res) => {
       responseData.recentUsers = await User.find({}, '-passwordHash').sort({ createdAt: -1 }).limit(5);
     } 
     
-    else if (role === 'Asset Manager') {
+    else if (role === 'asset_manager') {
       // 2. Asset Manager Dashboard Stats
-      const [available, allocated, maintenanceToday, pendingTransfers, upcomingReturns] = await Promise.all([
+      const [pendingMaint, underMaint, completedMaint, available, allocated] = await Promise.all([
+        MaintenanceRequest.countDocuments({ status: 'Pending' }),
+        Asset.countDocuments({ status: 'Under Maintenance' }),
+        MaintenanceRequest.countDocuments({ status: 'Completed' }),
         Asset.countDocuments({ status: 'Available' }),
         Asset.countDocuments({ status: 'Allocated' }),
-        Maintenance.countDocuments({ status: { $in: ['Approved', 'In Progress'] } }),
-        Transfer.countDocuments({ status: 'Pending' }),
-        Booking.countDocuments({ status: 'Upcoming', endTime: { $gte: new Date() } }),
       ]);
 
       responseData.stats = {
+        pendingMaintenance: pendingMaint,
+        assetsUnderMaintenance: underMaint,
+        completedToday: completedMaint,
         availableAssets: available,
         allocatedAssets: allocated,
-        maintenanceToday,
-        pendingTransfers,
-        upcomingReturns,
       };
 
       // Fetch assets list under maintenance
-      responseData.activeMaintenanceList = await Maintenance.find({ status: { $in: ['Approved', 'In Progress'] } })
+      responseData.activeMaintenanceList = await MaintenanceRequest.find({ status: { $in: ['Approved', 'In Progress'] } })
         .populate('assetId', 'assetTag name')
-        .populate('requesterId', 'name')
+        .populate('employeeId', 'name')
         .limit(5);
     } 
     
-    else if (role === 'Department Head') {
+    else if (role === 'department_head') {
       // 3. Department Head Dashboard Stats
       // Find assets matching this head's departmentId
       const deptFilter = userDeptId || 'N/A';
@@ -108,19 +110,36 @@ router.get('/stats', authMiddleware, async (req, res) => {
     
     else {
       // 4. Employee Dashboard Stats (Default)
-      const [myAssets, myBookings, myMaintenance] = await Promise.all([
-        Asset.find({ currentHolderId: userId }),
+      console.log('Dashboard query - userId:', userId.toString());
+      const allAllocs = await Allocation.find({});
+      console.log('Total allocations in DB:', allAllocs.length);
+      if (allAllocs.length > 0) {
+        console.log('First allocation details:', {
+          employeeId: allAllocs[0].employeeId.toString(),
+          status: allAllocs[0].status,
+          assetId: allAllocs[0].assetId
+        });
+      }
+
+      const [myAllocations, myBookings, myMaintenance] = await Promise.all([
+        Allocation.find({ employeeId: userId, status: 'Active' }).populate('assetId'),
         Booking.find({ employeeId: userId }).populate('assetId', 'name assetTag category'),
-        Maintenance.find({ requesterId: userId }).populate('assetId', 'name assetTag status').sort({ createdAt: -1 }),
+        MaintenanceRequest.find({ employeeId: userId }).populate('assetId', 'name assetTag status').sort({ createdAt: -1 }),
       ]);
 
+      console.log('Matching allocations count:', myAllocations.length);
+
+      const pendingMaintenance = myMaintenance.filter(r => r.status === 'Pending').length;
+      const completedMaintenance = myMaintenance.filter(r => r.status === 'Completed').length;
+
       responseData.stats = {
-        myAssetsCount: myAssets.length,
-        myBookingsCount: myBookings.length,
-        myMaintenanceCount: myMaintenance.length,
+        myAssetsCount: myAllocations.length,
+        pendingMaintenance,
+        completedMaintenance,
+        currentAllocations: myAllocations.length,
       };
 
-      responseData.myAssets = myAssets;
+      responseData.myAllocations = myAllocations;
       responseData.myBookings = myBookings;
       responseData.myMaintenanceList = myMaintenance;
     }

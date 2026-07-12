@@ -9,7 +9,7 @@ const { authMiddleware, authorizeRoles } = require('../middleware/auth');
 router.post(
   '/',
   authMiddleware,
-  authorizeRoles('Admin', 'Asset Manager'),
+  authorizeRoles('admin', 'asset_manager'),
   async (req, res) => {
     try {
       const { assetTag, name, category, departmentId } = req.body;
@@ -75,7 +75,7 @@ router.get('/', authMiddleware, async (req, res) => {
 router.put(
   '/:id/status',
   authMiddleware,
-  authorizeRoles('Admin', 'Asset Manager'),
+  authorizeRoles('admin', 'asset_manager'),
   async (req, res) => {
     try {
       const { status } = req.body;
