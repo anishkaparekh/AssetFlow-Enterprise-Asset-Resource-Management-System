@@ -18,6 +18,9 @@ const userRoutes = require('./routes/users');
 const allocationsRoutes = require('./routes/allocations');
 const bookingsRoutes = require('./routes/bookings');
 const transfersRoutes = require('./routes/transfers');
+const maintenanceRoutes = require('./routes/maintenance');
+const notificationRoutes = require('./routes/notifications');
+const dashboardRoutes = require('./routes/dashboard');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -34,6 +37,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/allocations', allocationsRoutes);
 app.use('/api/bookings', bookingsRoutes);
 app.use('/api/transfers', transfersRoutes);
+app.use('/api/maintenance', maintenanceRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

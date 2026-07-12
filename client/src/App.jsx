@@ -7,6 +7,8 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import AssetManager from './pages/AssetManager';
 import AdminDashboard from './pages/AdminDashboard';
+import Notifications from './pages/Notifications';
+import Maintenance from './pages/Maintenance';
 import { Loader2 } from 'lucide-react';
 
 // Protected Route Component
@@ -133,6 +135,26 @@ export default function App() {
           <AdminRoute>
             <AdminDashboard />
           </AdminRoute>
+        }
+      />
+
+      {/* Protected Notifications Route */}
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            <Notifications />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Protected Maintenance Route */}
+      <Route
+        path="/maintenance"
+        element={
+          <ProtectedRoute>
+            <Maintenance />
+          </ProtectedRoute>
         }
       />
 
