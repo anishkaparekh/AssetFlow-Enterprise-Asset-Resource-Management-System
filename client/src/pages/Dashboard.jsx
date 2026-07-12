@@ -56,13 +56,23 @@ export default function Dashboard() {
             </span>
           </div>
 
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all border border-transparent hover:border-white/5"
-          >
-            <LogOut size={16} />
-            <span>Sign Out</span>
-          </button>
+          <div className="flex items-center gap-4">
+            {user.role === 'Admin' && (
+              <button
+                onClick={() => navigate('/admin')}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-brand-primary/10 border border-brand-primary/25 text-brand-primary hover:bg-brand-primary/20 transition-all hover:shadow-[0_0_15px_rgba(99,102,241,0.15)]"
+              >
+                Admin Panel
+              </button>
+            )}
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all border border-transparent hover:border-white/5"
+            >
+              <LogOut size={16} />
+              <span>Sign Out</span>
+            </button>
+          </div>
         </div>
       </header>
 
