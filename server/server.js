@@ -1,3 +1,12 @@
+const dns = require('dns');
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4']);
+} catch (e) {
+  console.error('Failed to set DNS servers:', e);
+}
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -6,6 +15,9 @@ const authRoutes = require('./routes/auth');
 const assetsRoutes = require('./routes/assets');
 const departmentRoutes = require('./routes/departments');
 const userRoutes = require('./routes/users');
+const allocationsRoutes = require('./routes/allocations');
+const bookingsRoutes = require('./routes/bookings');
+const transfersRoutes = require('./routes/transfers');
 const maintenanceRoutes = require('./routes/maintenance');
 const notificationRoutes = require('./routes/notifications');
 const dashboardRoutes = require('./routes/dashboard');
@@ -22,6 +34,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/assets', assetsRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/allocations', allocationsRoutes);
+app.use('/api/bookings', bookingsRoutes);
+app.use('/api/transfers', transfersRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);

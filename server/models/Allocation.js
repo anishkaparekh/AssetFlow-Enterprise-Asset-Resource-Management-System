@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const BookingSchema = new mongoose.Schema(
+const AllocationSchema = new mongoose.Schema(
   {
     assetId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -12,18 +12,26 @@ const BookingSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'Employee ID is required'],
     },
-    startTime: {
+    allocatedAt: {
       type: Date,
-      required: [true, 'Start time is required'],
+      default: Date.now,
     },
-    endTime: {
+    expectedReturnDate: {
       type: Date,
-      required: [true, 'End time is required'],
+      required: [true, 'Expected return date is required'],
+    },
+    returnedAt: {
+      type: Date,
+      default: null,
     },
     status: {
       type: String,
-      enum: ['Upcoming', 'Ongoing', 'Completed', 'Cancelled'],
-      default: 'Upcoming',
+      enum: ['Active', 'Returned'],
+      default: 'Active',
+    },
+    returnCondition: {
+      type: String,
+      default: null,
     },
   },
   {
@@ -31,11 +39,11 @@ const BookingSchema = new mongoose.Schema(
   }
 );
 
-BookingSchema.set('toJSON', {
+AllocationSchema.set('toJSON', {
   transform: (doc, ret) => {
     delete ret.__v;
     return ret;
   },
 });
 
-module.exports = mongoose.model('Booking', BookingSchema);
+module.exports = mongoose.model('Allocation', AllocationSchema);
