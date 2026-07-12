@@ -99,7 +99,7 @@ export default function Login() {
                 type="button"
                 onClick={() => {
                   setEmail('admin@assetflow.com');
-                  setPassword('Admin@123');
+                  setPassword('admin123');
                 }}
                 className="px-2.5 py-1 bg-brand-primary/10 hover:bg-brand-primary/20 text-brand-primary border border-brand-primary/20 hover:border-brand-primary/30 rounded text-[10px] font-bold tracking-wider uppercase transition-all cursor-pointer"
               >
