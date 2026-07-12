@@ -6,7 +6,12 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import AssetManager from './pages/AssetManager';
+import AssetAllocation from './pages/AssetAllocation';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminDepartments from './pages/AdminDepartments';
+import AdminCategories from './pages/AdminCategories';
+import AdminEmployees from './pages/AdminEmployees';
+import AdminRoleManagement from './pages/AdminRoleManagement';
 import Notifications from './pages/Notifications';
 import Maintenance from './pages/Maintenance';
 import { Loader2 } from 'lucide-react';
@@ -157,10 +162,108 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/manager/dashboard"
+        element={
+          <ProtectedRoute>
+            <AssetManager />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/department/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Protected Asset Allocation Route */}
+      <Route
+        path="/allocations"
+        element={
+          <ProtectedRoute>
+            <AssetAllocation />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Protected Admin Dashboard Route */}
       <Route
         path="/admin"
+        element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/dashboard"
+        element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/departments"
+        element={
+          <AdminRoute>
+            <AdminDepartments />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/categories"
+        element={
+          <AdminRoute>
+            <AdminCategories />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/employees"
+        element={
+          <AdminRoute>
+            <AdminEmployees />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/directory"
+        element={
+          <AdminRoute>
+            <AdminEmployees />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/role-management"
+        element={
+          <AdminRoute>
+            <AdminRoleManagement />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/assets"
+        element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/reports"
+        element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/settings"
         element={
           <AdminRoute>
             <AdminDashboard />

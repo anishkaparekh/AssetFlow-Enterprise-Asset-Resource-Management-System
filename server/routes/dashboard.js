@@ -6,9 +6,8 @@ const Department = require('../models/Department');
 const Asset = require('../models/Asset');
 const Maintenance = require('../models/Maintenance');
 const Booking = require('../models/Booking');
-const Transfer = require('../models/Transfer');
-const Audit = require('../models/Audit');
 const Allocation = require('../models/Allocation');
+const Audit = require('../models/Audit');
 const MaintenanceRequest = require('../models/MaintenanceRequest');
 const { authMiddleware } = require('../middleware/auth');
 
@@ -28,18 +27,34 @@ router.get('/stats', authMiddleware, async (req, res) => {
 
     if (role === 'admin') {
       // 1. Admin Dashboard Stats
-      const [totalUsers, totalDepts, totalAssets, activeAudits] = await Promise.all([
+      const [
+        totalUsers,
+        totalDepts,
+        totalAssets,
+        availableAssets,
+        allocatedAssets,
+        underMaintenance,
+        pendingTransfers,
+        pendingMaintenance
+      ] = await Promise.all([
         User.countDocuments(),
         Department.countDocuments(),
         Asset.countDocuments(),
-        Audit.countDocuments({ status: 'Pending' }),
+        Asset.countDocuments({ status: 'Available' }),
+        Asset.countDocuments({ status: 'Allocated' }),
+        Asset.countDocuments({ status: 'Under Maintenance' }),
+        Allocation.countDocuments({ allocationStatus: 'Transfer Requested' }),
+        Maintenance.countDocuments({ status: 'Pending' })
       ]);
 
       responseData.stats = {
         totalUsers,
         totalDepartments: totalDepts,
         totalAssets,
-        activeAudits,
+        availableAssets,
+        allocatedAssets,
+        underMaintenance,
+        pendingRequests: pendingTransfers + pendingMaintenance
       };
 
       // Extra activity log info
@@ -49,12 +64,14 @@ router.get('/stats', authMiddleware, async (req, res) => {
     
     else if (role === 'asset_manager') {
       // 2. Asset Manager Dashboard Stats
-      const [pendingMaint, underMaint, completedMaint, available, allocated] = await Promise.all([
+      const [pendingMaint, underMaint, completedMaint, available, allocated, pendingTransfers, upcomingReturns] = await Promise.all([
         MaintenanceRequest.countDocuments({ status: 'Pending' }),
         Asset.countDocuments({ status: 'Under Maintenance' }),
         MaintenanceRequest.countDocuments({ status: 'Completed' }),
         Asset.countDocuments({ status: 'Available' }),
         Asset.countDocuments({ status: 'Allocated' }),
+        Allocation.countDocuments({ allocationStatus: 'Transfer Requested' }),
+        Allocation.countDocuments({ allocationStatus: 'Allocated', expectedReturnDate: { $gte: new Date() } }),
       ]);
 
       responseData.stats = {
@@ -63,6 +80,8 @@ router.get('/stats', authMiddleware, async (req, res) => {
         completedToday: completedMaint,
         availableAssets: available,
         allocatedAssets: allocated,
+        pendingTransfers,
+        upcomingReturns,
       };
 
       // Fetch assets list under maintenance
@@ -74,69 +93,66 @@ router.get('/stats', authMiddleware, async (req, res) => {
     
     else if (role === 'department_head') {
       // 3. Department Head Dashboard Stats
-      // Find assets matching this head's departmentId
-      const deptFilter = userDeptId || 'N/A';
+      const deptFilter = userDeptId || null;
       
-      // Find department users
-      const deptUsers = await User.find({ departmentId: deptFilter }, '_id');
-      const deptUserIds = deptUsers.map(u => u._id);
+      let deptUserIds = [];
+      if (deptFilter) {
+        const deptUsers = await User.find({ departmentId: deptFilter }, '_id');
+        deptUserIds = deptUsers.map(u => u._id);
+      }
 
-      const [deptAssetsCount, pendingApprovals, teamBookingsCount] = await Promise.all([
-        Asset.countDocuments({ departmentId: deptFilter }),
-        // Approvals could be transfers to/from department or bookings waiting approval
-        Transfer.countDocuments({ 
-          toDepartmentId: deptFilter, 
-          status: 'Pending' 
-        }),
-        Booking.countDocuments({ 
-          employeeId: { $in: deptUserIds }, 
-          status: 'Upcoming' 
-        }),
+      const [deptAssetsCount, deptAllocationsCount, pendingApprovalsCount] = await Promise.all([
+        deptFilter ? Asset.countDocuments({ departmentId: deptFilter }) : 0,
+        deptUserIds.length ? Allocation.countDocuments({ employeeId: { $in: deptUserIds }, allocationStatus: 'Allocated' }) : 0,
+        deptUserIds.length ? Allocation.countDocuments({ 
+          allocationStatus: 'Transfer Requested',
+          $or: [
+            { employeeId: { $in: deptUserIds } },
+            { targetHolderId: { $in: deptUserIds } }
+          ]
+        }) : 0
       ]);
 
       responseData.stats = {
         departmentAssets: deptAssetsCount,
-        pendingApprovals: pendingApprovals + teamBookingsCount,
-        teamBookings: teamBookingsCount,
+        departmentAllocations: deptAllocationsCount,
+        pendingApprovals: pendingApprovalsCount,
       };
 
-      responseData.departmentInfo = userDeptId ? await Department.findOne({ _id: userDeptId }) : null;
+      responseData.departmentInfo = deptFilter ? await Department.findOne({ _id: deptFilter }) : null;
       
       // List of department assets
-      responseData.deptAssetsList = await Asset.find({ departmentId: deptFilter })
+      responseData.deptAssetsList = deptFilter ? await Asset.find({ departmentId: deptFilter })
         .populate('currentHolderId', 'name email')
-        .limit(5);
+        .limit(5) : [];
     } 
     
     else {
       // 4. Employee Dashboard Stats (Default)
-      console.log('Dashboard query - userId:', userId.toString());
-      const allAllocs = await Allocation.find({});
-      console.log('Total allocations in DB:', allAllocs.length);
-      if (allAllocs.length > 0) {
-        console.log('First allocation details:', {
-          employeeId: allAllocs[0].employeeId.toString(),
-          status: allAllocs[0].status,
-          assetId: allAllocs[0].assetId
-        });
-      }
-
       const [myAllocations, myBookings, myMaintenance] = await Promise.all([
-        Allocation.find({ employeeId: userId, status: 'Active' }).populate('assetId'),
+        Allocation.find({ employeeId: userId, allocationStatus: 'Allocated' }).populate('assetId'),
         Booking.find({ employeeId: userId }).populate('assetId', 'name assetTag category'),
         MaintenanceRequest.find({ employeeId: userId }).populate('assetId', 'name assetTag status').sort({ createdAt: -1 }),
       ]);
 
-      console.log('Matching allocations count:', myAllocations.length);
-
       const pendingMaintenance = myMaintenance.filter(r => r.status === 'Pending').length;
       const completedMaintenance = myMaintenance.filter(r => r.status === 'Completed').length;
+
+      // Calculate overdue return requests (Rudra's metric)
+      const overdueReturnsCount = await Allocation.countDocuments({
+        employeeId: userId,
+        allocationStatus: 'Allocated',
+        expectedReturnDate: { $lt: new Date() }
+      });
 
       responseData.stats = {
         myAssetsCount: myAllocations.length,
         pendingMaintenance,
         completedMaintenance,
         currentAllocations: myAllocations.length,
+        myBookingsCount: myBookings.length,
+        myMaintenanceCount: myMaintenance.length,
+        returnRequests: overdueReturnsCount,
       };
 
       responseData.myAllocations = myAllocations;

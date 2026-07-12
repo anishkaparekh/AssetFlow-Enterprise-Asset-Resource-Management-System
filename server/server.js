@@ -21,6 +21,7 @@ const transfersRoutes = require('./routes/transfers');
 const maintenanceRoutes = require('./routes/maintenance');
 const notificationRoutes = require('./routes/notifications');
 const dashboardRoutes = require('./routes/dashboard');
+const categoriesRoutes = require('./routes/categories');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -40,6 +41,7 @@ app.use('/api/transfers', transfersRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/categories', categoriesRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -114,7 +116,11 @@ const connectDB = async () => {
     await mongoose.connect(connStr);
     console.log('✓ MongoDB Connected');
     
-    // Seed default admin
+    // Auto seed default data
+    const autoSeed = require('./utils/autoSeed');
+    await autoSeed();
+    
+    // Auto seed default admin (Anishka's requirement)
     await createDefaultAdmin();
     
     app.listen(PORT, () => {

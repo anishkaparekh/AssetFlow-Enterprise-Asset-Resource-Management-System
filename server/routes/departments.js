@@ -86,4 +86,63 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
   }
 });
 
+// @route   PUT /api/departments/:id
+// @desc    Update an existing department
+// @access  Private/Admin
+router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { name, description, headId } = req.body;
+    const dept = await Department.findById(req.params.id);
+
+    if (!dept) {
+      return res.status(404).json({ message: 'Department not found' });
+    }
+
+    if (name) {
+      const existingDept = await Department.findOne({ name, _id: { $ne: req.params.id } });
+      if (existingDept) {
+        return res.status(400).json({ message: 'Department name already in use' });
+      }
+      dept.name = name;
+    }
+
+    if (description !== undefined) {
+      dept.description = description;
+    }
+
+    if (headId !== undefined) {
+      dept.headId = headId || null;
+    }
+
+    const savedDept = await dept.save();
+    const populatedDept = await Department.findById(savedDept._id).populate('headId', 'name email role');
+
+    res.json({
+      message: 'Department updated successfully',
+      department: populatedDept,
+    });
+  } catch (error) {
+    console.error('Error updating department:', error);
+    res.status(500).json({ message: 'Server error updating department' });
+  }
+});
+
+// @route   DELETE /api/departments/:id
+// @desc    Delete a department
+// @access  Private/Admin
+router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const dept = await Department.findById(req.params.id);
+    if (!dept) {
+      return res.status(404).json({ message: 'Department not found' });
+    }
+
+    await Department.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Department deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting department:', error);
+    res.status(500).json({ message: 'Server error deleting department' });
+  }
+});
+
 module.exports = router;

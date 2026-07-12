@@ -14,11 +14,13 @@ import {
   Cpu, 
   Wrench, 
   Bell, 
-  TrendingUp, 
-  BookOpen, 
+  TrendingUp,
+  BookOpen,
   AlertTriangle,
   FolderOpen,
-  ShieldCheck
+  Check,
+  ShieldCheck,
+  ClipboardList
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -140,11 +142,23 @@ export default function Dashboard() {
               </button>
             )}
 
-            {user.role === 'admin' && (
+            <button
+              onClick={() => navigate('/allocations')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                location.pathname === '/allocations'
+                  ? 'bg-brand-primary/15 text-brand-primary border-brand-primary/25'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5 border-white/5'
+              }`}
+            >
+              <ClipboardList size={12} />
+              <span>Allocations</span>
+            </button>
+
+            {user.role && user.role.toLowerCase() === 'admin' && (
               <button
                 onClick={() => navigate('/admin')}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                  location.pathname === '/admin'
+                  location.pathname === '/admin' || location.pathname === '/admin/dashboard'
                     ? 'bg-brand-primary/20 border-brand-primary/35 text-brand-primary'
                     : 'bg-brand-primary/10 border-brand-primary/25 text-brand-primary hover:bg-brand-primary/20'
                 }`}

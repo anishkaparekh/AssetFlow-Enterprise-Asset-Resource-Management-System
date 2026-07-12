@@ -236,13 +236,17 @@ router.post('/seed', async (req, res) => {
     ];
     const savedAssets = await Asset.insertMany(assets);
 
+    const adminUser = await User.findOne({ email: 'admin@assetflow.com' });
+    const adminId = adminUser ? adminUser._id : savedManager._id;
+
     // Create matching Allocation document
     const allocation = new Allocation({
       assetId: savedAssets[0]._id,
       employeeId: savedEmployee._id,
-      allocatedAt: new Date(),
+      allocatedBy: adminId,
+      allocationDate: new Date(),
       expectedReturnDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      status: 'Active',
+      allocationStatus: 'Allocated',
     });
     await allocation.save();
 
