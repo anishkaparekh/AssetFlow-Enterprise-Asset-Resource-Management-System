@@ -26,18 +26,34 @@ router.get('/stats', authMiddleware, async (req, res) => {
 
     if (role === 'Admin') {
       // 1. Admin Dashboard Stats
-      const [totalUsers, totalDepts, totalAssets, activeAudits] = await Promise.all([
+      const [
+        totalUsers,
+        totalDepts,
+        totalAssets,
+        availableAssets,
+        allocatedAssets,
+        underMaintenance,
+        pendingTransfers,
+        pendingMaintenance
+      ] = await Promise.all([
         User.countDocuments(),
         Department.countDocuments(),
         Asset.countDocuments(),
-        Audit.countDocuments({ status: 'Pending' }),
+        Asset.countDocuments({ status: 'Available' }),
+        Asset.countDocuments({ status: 'Allocated' }),
+        Asset.countDocuments({ status: 'Under Maintenance' }),
+        Allocation.countDocuments({ allocationStatus: 'Transfer Requested' }),
+        Maintenance.countDocuments({ status: 'Pending' })
       ]);
 
       responseData.stats = {
         totalUsers,
         totalDepartments: totalDepts,
         totalAssets,
-        activeAudits,
+        availableAssets,
+        allocatedAssets,
+        underMaintenance,
+        pendingRequests: pendingTransfers + pendingMaintenance
       };
 
       // Extra activity log info

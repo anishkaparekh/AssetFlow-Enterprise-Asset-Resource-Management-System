@@ -59,34 +59,82 @@ router.put('/:id/role', authMiddleware, adminMiddleware, async (req, res) => {
     const { role, departmentId } = req.body;
     const userId = req.params.id;
 
-    // Validate role if provided
     const validRoles = ['Admin', 'Asset Manager', 'Department Head', 'Employee'];
     if (role && !validRoles.includes(role)) {
       return res.status(400).json({ message: 'Invalid role assignment' });
     }
 
-    // Find user
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Update fields
     if (role) user.role = role;
-    
-    // departmentId can be updated or explicitly set to null
     if (departmentId !== undefined) {
       user.departmentId = departmentId || null;
     }
 
     const updatedUser = await user.save();
-    
     res.json({
       message: 'User profile updated successfully',
       user: updatedUser,
     });
   } catch (error) {
     console.error('Error updating user role:', error);
+    res.status(500).json({ message: 'Server error updating user profile' });
+  }
+});
+
+// @route   PUT /api/users/:id
+// @desc    Update employee profile details (Admin only)
+// @access  Private/Admin
+router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { name, email, role, departmentId, status } = req.body;
+    const userId = req.params.id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (email && email.toLowerCase() !== user.email.toLowerCase()) {
+      const emailExists = await User.findOne({ email: email.toLowerCase() });
+      if (emailExists) {
+        return res.status(400).json({ message: 'Email address already in use' });
+      }
+      user.email = email.toLowerCase();
+    }
+
+    if (name) user.name = name.trim();
+
+    const validRoles = ['Admin', 'Asset Manager', 'Department Head', 'Employee'];
+    if (role) {
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({ message: 'Invalid role assignment' });
+      }
+      user.role = role;
+    }
+
+    if (departmentId !== undefined) {
+      user.departmentId = departmentId || null;
+    }
+
+    const validStatuses = ['Active', 'Inactive'];
+    if (status) {
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ message: 'Invalid status value' });
+      }
+      user.status = status;
+    }
+
+    const updatedUser = await user.save();
+    res.json({
+      message: 'Employee profile updated successfully',
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error('Error updating user profile:', error);
     res.status(500).json({ message: 'Server error updating user profile' });
   }
 });

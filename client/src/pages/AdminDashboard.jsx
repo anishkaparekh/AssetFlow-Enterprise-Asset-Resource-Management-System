@@ -315,14 +315,15 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* KPI Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {[
-                      { label: 'Total Employees', value: employees.length, icon: Users, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
-                      { label: 'Total Hardware Assets', value: assets.length, icon: Laptop, color: 'text-brand-secondary', bg: 'bg-brand-secondary/10' },
-                      { label: 'Registered Departments', value: departments.length, icon: Building2, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-                      { label: 'Available Assets', value: assets.filter(a => a.status === 'Available').length, icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-                      { label: 'Allocated Assets', value: assets.filter(a => a.status === 'Allocated').length, icon: Laptop, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
-                      { label: 'Maintenance Active', value: assets.filter(a => a.status === 'Under Maintenance').length, icon: Activity, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+                      { label: 'Total Employees', value: stats?.totalUsers ?? employees.length, icon: Users, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
+                      { label: 'Total Departments', value: stats?.totalDepartments ?? departments.length, icon: Building2, color: 'text-purple-400', bg: 'bg-purple-500/10' },
+                      { label: 'Total Assets', value: stats?.totalAssets ?? assets.length, icon: Laptop, color: 'text-brand-secondary', bg: 'bg-brand-secondary/10' },
+                      { label: 'Available Assets', value: stats?.availableAssets ?? assets.filter(a => a.status === 'Available').length, icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+                      { label: 'Allocated Assets', value: stats?.allocatedAssets ?? assets.filter(a => a.status === 'Allocated').length, icon: Laptop, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
+                      { label: 'Under Maintenance', value: stats?.underMaintenance ?? assets.filter(a => a.status === 'Under Maintenance').length, icon: Activity, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+                      { label: 'Pending Requests', value: stats?.pendingRequests ?? 0, icon: AlertCircle, color: 'text-rose-400', bg: 'bg-rose-500/10' },
                     ].map((kpi, idx) => {
                       const Icon = kpi.icon;
                       return (

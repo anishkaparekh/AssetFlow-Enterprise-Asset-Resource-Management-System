@@ -20,7 +20,7 @@ export default function AdminLayout({ children }) {
     { id: 'dashboard', label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
     { id: 'departments', label: 'Departments', path: '/admin/departments', icon: Building2 },
     { id: 'categories', label: 'Asset Categories', path: '/admin/categories', icon: Tags },
-    { id: 'directory', label: 'Employee Directory', path: '/admin/directory', icon: Users },
+    { id: 'directory', label: 'Employee Directory', path: '/admin/employees', icon: Users },
     { id: 'role-management', label: 'Role Management', path: '/admin/role-management', icon: Shield },
     { id: 'assets', label: 'Assets', path: '/admin/assets', icon: Laptop },
     { id: 'reports', label: 'Reports', path: '/admin/reports', icon: BarChart3 },

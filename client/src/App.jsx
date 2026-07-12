@@ -10,6 +10,8 @@ import AssetAllocation from './pages/AssetAllocation';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminDepartments from './pages/AdminDepartments';
 import AdminCategories from './pages/AdminCategories';
+import AdminEmployees from './pages/AdminEmployees';
+import AdminRoleManagement from './pages/AdminRoleManagement';
 import Notifications from './pages/Notifications';
 import Maintenance from './pages/Maintenance';
 import { Loader2 } from 'lucide-react';
@@ -221,10 +223,18 @@ export default function App() {
         }
       />
       <Route
+        path="/admin/employees"
+        element={
+          <AdminRoute>
+            <AdminEmployees />
+          </AdminRoute>
+        }
+      />
+      <Route
         path="/admin/directory"
         element={
           <AdminRoute>
-            <AdminDashboard />
+            <AdminEmployees />
           </AdminRoute>
         }
       />
@@ -232,7 +242,7 @@ export default function App() {
         path="/admin/role-management"
         element={
           <AdminRoute>
-            <AdminDashboard />
+            <AdminRoleManagement />
           </AdminRoute>
         }
       />
